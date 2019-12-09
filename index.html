@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CS 418/518 - Streaming over IP</title>    
+    
+<style type="text/css">
+    body {
+        background-color: rgb(22, 145, 63);
+        height: 100vh;
+    }
+    
+    a.button1 {
+        display: inline-block;
+        padding: 1em 2em;
+        border: 0.1em solid #ffffff;
+        margin: 0 0.3em 0.3em 0;
+        border-radius: 0.12em;
+        box-sizing: border-box;
+        text-decoration: none;
+        font-family: monospace;
+        font-weight: 300;
+        color: #FFFFFF;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    a.button1:hover {
+        color: #000000;
+        background-color: #FFFFFF;
+    }
+
+    @media all and (max-width:30em) {
+        a.button1 {
+            display: block;
+            margin: 0.4em auto;
+        }
+    }
+
+    .heading {
+        color: rgb(239, 245, 247);
+        font-weight: 300;
+        font-family: monospace;
+        margin-top: 8vh;
+        margin-bottom: 5vh;
+    }
+
+    .sub-heading {
+        color: rgb(239, 245, 247);
+        font-weight: 300;
+        font-family: monospace;
+        margin-top: 4vh;
+        margin-bottom: 0;
+    }
+
+    .description {
+        font-family: monospace;
+        font-size: 16px;
+        line-height: 20px;
+    }
+</style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <div id="root" class="container" style="text-align: center;">
+        <h1 class="heading">Video Streaming over HTTP with HLS, RTMP and NGINX</h1>
+        <video id="video" width=720 class="video-js vjs-default-skin" controls></video>
+        <div style="margin-top: 2%;"> <a class="button1" id="download" onclick="downloadScreenshot()">Download Snapshot</a></div>
+
+        <div>
+            <h2 class="sub-heading">Description</h2>
+            <hr style="width: 10%;">
+            <p class="description" style="margin-right: 20vw; margin-left: 20vw;">This demo is built for the CS 418/518 Networked Entertainment course. Video is captured and
+                encoded by ffmpeg on a laptop from webcam with multiple bitrates for adaptive streaming, output of ffmpeg is redirected to our server in 
+                AWS by RTMP then nginx server on our AWS instance serves the video.
+            </p>
+        </div>
+
+        <canvas id="canvas" width="640" height="480" style="opacity: 0; position: absolute;"></canvas>
+    </div>
+
+    <script>
+        if (Hls.isSupported()) {
+            var video = document.getElementById('video');
+            var hls = new Hls();
+            hls.loadSource('http://your_ip/hls/stream.m3u8');
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                video.play();
+            });
+        }
+
+        var video = document.querySelector('video');
+        var canvas = document.querySelector('canvas');
+        var context = canvas.getContext('2d');
+        var w, h, ratio;
+
+        video.addEventListener('loadedmetadata', function () {
+            ratio = video.videoWidth / video.videoHeight;
+            w = video.videoWidth;
+            h = parseInt(w / ratio, 10);
+            canvas.width = w;
+            canvas.height = h;
+        }, false);
+
+        function downloadScreenshot() {
+            var button = document.getElementById('download');
+            takeSnapshot();
+            var link = document.createElement('a');
+            link.download = 'screenshot.png';
+            link.href = document.getElementById('canvas').toDataURL()
+            link.click();
+        }
+
+        function takeSnapshot() {
+            context.fillRect(0, 0, w, h);
+            context.drawImage(video, 0, 0, w, h);
+        }
+    </script>
+</body>
+</html>
